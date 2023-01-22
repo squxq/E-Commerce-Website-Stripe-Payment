@@ -45,14 +45,14 @@ app.get("/api/v1/pictures", (req, res) => {
 
 app.post(`/api/v1/pictures`, upload.single("image"), (req, res) => {
   const obj = {
-    name: data[0].name,
-    shortDescription: data[0].shortDescription,
-    longDescription: data[0].longDescription,
-    price: data[0].price,
-    category: data[0].category,
-    createdAt: data[0].createdAt,
-    updatedAt: data[0].updatedAt,
-    publishedAt: data[0].publishedAt,
+    name: data[17].name,
+    shortDescription: data[17].shortDescription,
+    longDescription: data[17].longDescription,
+    price: data[17].price,
+    category: data[17].category,
+    createdAt: data[17].createdAt,
+    updatedAt: data[17].updatedAt,
+    publishedAt: data[17].publishedAt,
     image: `${req.protocol}://${req.header(
       "host"
     )}/public/uploads/${req.body.file.replace(/\s/g, "")}`,
