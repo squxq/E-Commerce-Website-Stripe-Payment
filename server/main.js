@@ -5,12 +5,15 @@ require("dotenv").config()
 const multer = require("multer")
 const data = require("./data")
 const Item = require("./models/Item")
+const cors = require("cors")
 
 const fs = require("fs")
 const path = require("path")
 
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
+app.use(cors())
+app.use("public/uploads", express.static(__dirname + "public/uploads"))
 
 const port = process.env.PORT || 5000
 const connectDB = require("./db/connect")
@@ -20,7 +23,7 @@ const connectDB = require("./db/connect")
 // multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cd(null, "uploads")
+    cd(null, "public/uploads")
   },
   filename: (req, file, cb) => {
     cb(null, file.fieldname, +"-" + Date.now())
@@ -42,18 +45,17 @@ app.get("/api/v1/pictures", (req, res) => {
 
 app.post(`/api/v1/pictures`, upload.single("image"), (req, res) => {
   const obj = {
-    name: data[11].name,
-    shortDescription: data[11].shortDescription,
-    longDescription: data[11].longDescription,
-    price: data[11].price,
-    category: data[11].category,
-    createdAt: data[11].createdAt,
-    updatedAt: data[11].updatedAt,
-    publishedAt: data[11].publishedAt,
-    image: {
-      data: fs.readFileSync(path.join(__dirname + "/uploads/" + req.body.file)),
-      contentType: "image/jpeg",
-    },
+    name: data[0].name,
+    shortDescription: data[0].shortDescription,
+    longDescription: data[0].longDescription,
+    price: data[0].price,
+    category: data[0].category,
+    createdAt: data[0].createdAt,
+    updatedAt: data[0].updatedAt,
+    publishedAt: data[0].publishedAt,
+    image: `${req.protocol}://${req.header(
+      "host"
+    )}/public/uploads/${req.body.file.replace(/\s/g, "")}`,
   }
   Item.create(obj, (err, item) => {
     if (err) {
@@ -63,6 +65,10 @@ app.post(`/api/v1/pictures`, upload.single("image"), (req, res) => {
     }
   })
 })
+
+// get all items
+const itemsRouter = require("./routes/items")
+app.use("/api/v1", itemsRouter)
 
 // end of upload pictures to db
 
