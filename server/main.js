@@ -13,7 +13,7 @@ const path = require("path")
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(cors())
-app.use("public/uploads", express.static(__dirname + "public/uploads"))
+app.use("/public/uploads", express.static(__dirname + "/public/uploads"))
 
 const port = process.env.PORT || 5000
 const connectDB = require("./db/connect")
