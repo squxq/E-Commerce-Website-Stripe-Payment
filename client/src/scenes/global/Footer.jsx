@@ -61,7 +61,7 @@ const Footer = () => {
           <Typography mb="30px">
             50 north Whatever Blvd, Washington, DC 10501
           </Typography>
-          <Typography mb="30px">Email: somethingsomething@gmail.com</Typography>
+          {/* <Typography mb="30px">Email: somethingsomething@gmail.com</Typography> */}
           <Typography mb="30px">(222)333-4444</Typography>
         </Box>
       </Box>
