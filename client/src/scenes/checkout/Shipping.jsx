@@ -1,7 +1,6 @@
 import React from "react"
 import { Box, Checkbox, FormControlLabel, Typography } from "@mui/material"
 import AddressForm from "./AddressForm"
-import { Check } from "@mui/icons-material"
 
 const Shipping = ({
   values,
@@ -47,7 +46,7 @@ const Shipping = ({
       </Box>
 
       {/* Shipping Form */}
-      {values.shippingAddress.isSameAddress && (
+      {!values.shippingAddress.isSameAddress && (
         <Box>
           <Typography sx={{ mb: "15px", fontSize: "18px" }}>
             Shipping Information

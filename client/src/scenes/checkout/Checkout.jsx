@@ -6,11 +6,17 @@ import * as yup from "yup"
 import Shipping from "./Shipping"
 import Payment from "./Payment"
 import { shades } from "../../theme"
+import { loadStripe } from "@stripe/stripe-js"
+import axios from "axios"
+
+const stripePromise = loadStripe(
+  "pk_test_51MU6wMEdZCpDX0G2aXH1anYIUdknT2F8RCGIrZD7mWGzuFe548oz0fKNzA2x8T7kNZm2alnA7oEhpnGxRyE0Ce6W000kjnaNZ2"
+)
 
 const initialValues = {
   billingAddress: {
     firstName: "",
-    lastname: "",
+    lastName: "",
     country: "",
     street1: "",
     street2: "",
@@ -19,9 +25,9 @@ const initialValues = {
     zipCode: "",
   },
   shippingAddress: {
-    isSameAdress: true,
+    isSameAddress: true,
     firstName: "",
-    lastname: "",
+    lastName: "",
     country: "",
     street1: "",
     street2: "",
@@ -37,7 +43,7 @@ const checkoutSchema = [
   yup.object().shape({
     billingAddress: yup.object().shape({
       firstName: yup.string().required("required"),
-      lastname: yup.string().required("required"),
+      lastName: yup.string().required("required"),
       country: yup.string().required("required"),
       street1: yup.string().required("required"),
       street2: yup.string(),
@@ -46,33 +52,33 @@ const checkoutSchema = [
       zipCode: yup.string().required("required"),
     }),
     shippingAddress: yup.object().shape({
-      isSameAdress: yup.boolean(),
-      firstName: yup.string().when("isSameAdress", {
+      isSameAddress: yup.boolean(),
+      firstName: yup.string().when("isSameAddress", {
         is: false,
         then: yup.string().required("required"),
       }),
-      lastname: yup.string().when("isSameAdress", {
+      lastName: yup.string().when("isSameAddress", {
         is: false,
         then: yup.string().required("required"),
       }),
-      country: yup.string().when("isSameAdress", {
+      country: yup.string().when("isSameAddress", {
         is: false,
         then: yup.string().required("required"),
       }),
-      street1: yup.string().when("isSameAdress", {
+      street1: yup.string().when("isSameAddress", {
         is: false,
         then: yup.string().required("required"),
       }),
       street2: yup.string(),
-      city: yup.string().when("isSameAdress", {
+      city: yup.string().when("isSameAddress", {
         is: false,
         then: yup.string().required("required"),
       }),
-      state: yup.string().when("isSameAdress", {
+      state: yup.string().when("isSameAddress", {
         is: false,
         then: yup.string().required("required"),
       }),
-      zipCode: yup.string().when("isSameAdress", {
+      zipCode: yup.string().when("isSameAddress", {
         is: false,
         then: yup.string().required("required"),
       }),
@@ -86,34 +92,58 @@ const checkoutSchema = [
 
 const Checkout = () => {
   const [activeStep, setActiveStep] = useState(0)
-  // const cart = useState((state) => state.cart.cart)
-
-  const isFirstStep = activeStep === 0
-  const isSecondStep = activeStep === 1
+  const cart = useSelector((state) => state.cart.cart)
 
   const handleFormSubmit = async (values, actions) => {
+    console.log(activeStep)
+
     setActiveStep(activeStep + 1)
 
     // copies the billing address onto shipping address
-    if (isFirstStep && values.shippingAddress.isSameAdress) {
+    if (activeStep === 0 && values.shippingAddress.isSameAddress) {
       actions.setFieldValue("shippingAddress", {
         ...values.billingAddress,
-        isSameAdress: true,
+        isSameAddress: true,
       })
     }
 
-    if (isSecondStep) {
+    if (activeStep === 1) {
       makePayment(values)
     }
 
     actions.setTouched({})
   }
 
-  async function makePayment(values) {}
+  async function makePayment(values) {
+    console.log("make payment")
+    const stripe = await stripePromise
+    const requestBody = {
+      userName: [values.firstName, values.lastName].join(" "),
+      email: values.email,
+      products: cart.map(({ _id, count }) => ({
+        _id,
+        count,
+      })),
+    }
+
+    await axios({
+      method: "post",
+      url: "http://localhost:8000/api/v1/order",
+      data: {
+        data: requestBody,
+      },
+    })
+      .then(async (res) => {
+        await stripe.redirectToCheckout({
+          sessionId: res.data.session,
+        })
+      })
+      .catch((err) => console.log(err))
+  }
 
   return (
     <Box width="80%" m="100px auto">
-      <Stepper active={activeStep} sx={{ m: "20px 0" }}>
+      <Stepper activeStep={activeStep} sx={{ m: "20px 0" }}>
         <Step>
           <StepLabel>Billing</StepLabel>
         </Step>
@@ -137,7 +167,7 @@ const Checkout = () => {
             setFieldValue,
           }) => (
             <form onSubmit={handleSubmit}>
-              {isFirstStep && (
+              {activeStep === 0 && (
                 <Shipping
                   values={values}
                   errors={errors}
@@ -147,7 +177,7 @@ const Checkout = () => {
                   setFieldValue={setFieldValue}
                 />
               )}
-              {isSecondStep && (
+              {activeStep === 1 && (
                 <Payment
                   values={values}
                   errors={errors}
@@ -158,7 +188,7 @@ const Checkout = () => {
                 />
               )}
               <Box display="flex" justifyContent="space-between" gap="50px">
-                {isSecondStep && (
+                {activeStep !== 0 && (
                   <Button
                     fullWidth
                     color="primary"
@@ -187,9 +217,9 @@ const Checkout = () => {
                     borderRadius: 0,
                     padding: "15px 40px",
                   }}
-                  onClick={() => setActiveStep(activeStep - 1)}
+                  onClick={() => console.log("button submit")}
                 >
-                  {isFirstStep ? "Next" : "Place Order"}
+                  {activeStep !== 1 ? "Next" : "Place Order"}
                 </Button>
               </Box>
             </form>
